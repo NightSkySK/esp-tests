@@ -17,6 +17,18 @@ typedef struct {
   size_t bits;
 } data_packet_t;
 
+// Key mapping
+typedef struct {
+  uint8_t code;
+  char key;
+} key_mapping_t;
+
+static key_mapping_t key_mapping[] = {
+    {0x1e, '1'}, {0x2d, '2'}, {0x3c, '3'}, {0x4b, '4'},
+    {0x5a, '5'}, {0x69, '6'}, {0x78, '7'}, {0x87, '8'},
+    {0x96, '9'}, {0x0f, '0'}, {0xa5, 'E'}, {0xb4, 'T'} // E for ESC, T for ENT
+};
+
 // callback on new data in reader
 static void reader_callback(wiegand_reader_t *r) {
   // you can decode raw data from reader buffer here, but remember:
@@ -46,19 +58,34 @@ static void task(void *arg) {
                                       WIEGAND_MSB_FIRST, WIEGAND_LSB_FIRST));
 
   data_packet_t p;
+  char input[100] = {0}; // Input buffer
   while (1) {
-    ESP_LOGI(TAG, "Waiting for Wiegand data...");
+    // ESP_LOGI(TAG, "Waiting for Wiegand data...");
+    printf(".");
     xQueueReceive(queue, &p, portMAX_DELAY);
 
-    // dump received data
-    printf("==========================================\n");
-    printf("Bits received: %d\n", p.bits);
-    printf("Received data:");
-    int bytes = p.bits / 8;
-    int tail = p.bits % 8;
-    for (size_t i = 0; i < bytes + (tail ? 1 : 0); i++)
-      printf(" 0x%02x", p.data[i]);
-    printf("\n==========================================\n");
+    // Check if the data is 8 bits and not 0x80
+    if (p.bits >= 8 && p.data[0] != 0x80) {
+      // Check each key mapping
+      for (int i = 0; i < sizeof(key_mapping) / sizeof(key_mapping_t); i++) {
+        if (p.data[0] == key_mapping[i].code) {
+          // If the key ENT, process the input and clear it
+          if (key_mapping[i].key == 'T') {
+            printf("\nInput: %s\n", input);
+            memset(input, 0, sizeof(input));
+          }
+          // If the key is ESC, just clear the input
+          else if (key_mapping[i].key == 'E') {
+            memset(input, 0, sizeof(input));
+          } else {
+            // Otherwise, add the key to the input
+            char str[2] = {key_mapping[i].key, 0};
+            strcat(input, str);
+          }
+          break;
+        }
+      }
+    }
   }
 }
 
