@@ -340,12 +340,14 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# Example configuration
+# Keypad configuration
 #
-CONFIG_EXAMPLE_D0_GPIO=18
-CONFIG_EXAMPLE_D1_GPIO=19
+CONFIG_KEYPAD1_D0_GPIO=16
+CONFIG_KEYPAD1_D1_GPIO=17
+CONFIG_KEYPAD2_D0_GPIO=18
+CONFIG_KEYPAD2_D1_GPIO=19
 CONFIG_EXAMPLE_BUF_SIZE=4
-# end of Example configuration
+# end of Keypad configuration
 
 #
 # Compiler options
